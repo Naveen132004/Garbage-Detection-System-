@@ -1,0 +1,12 @@
+# Ignore virtual environment and temp files
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+
+# Ignore dataset and model files
+Weights/
+uploads/
+results/
+maps/

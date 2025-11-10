@@ -1,0 +1,251 @@
+[
+  {
+    "id": 1,
+    "timestamp": "2025-08-31T03:32:04.084075",
+    "location": {
+      "latitude": 12.8326196,
+      "longitude": 80.0423042,
+      "address": "Potheri, Chengalpattu, Tamil Nadu, 603202, India"
+    },
+    "garbage_count": 8,
+    "detections": [
+      {
+        "class": "garbage",
+        "confidence": 0.74,
+        "bbox": {
+          "x1": 797,
+          "y1": 313,
+          "x2": 1052,
+          "y2": 427,
+          "w": 255,
+          "h": 114
+        }
+      },
+      {
+        "class": "garbage",
+        "confidence": 0.61,
+        "bbox": {
+          "x1": 434,
+          "y1": 243,
+          "x2": 601,
+          "y2": 311,
+          "w": 167,
+          "h": 68
+        }
+      },
+      {
+        "class": "garbage",
+        "confidence": 0.51,
+        "bbox": {
+          "x1": 419,
+          "y1": 323,
+          "x2": 546,
+          "y2": 409,
+          "w": 127,
+          "h": 86
+        }
+      },
+      {
+        "class": "garbage",
+        "confidence": 0.5,
+        "bbox": {
+          "x1": 489,
+          "y1": 83,
+          "x2": 744,
+          "y2": 147,
+          "w": 255,
+          "h": 64
+        }
+      },
+      {
+        "class": "garbage",
+        "confidence": 0.46,
+        "bbox": {
+          "x1": 725,
+          "y1": 238,
+          "x2": 795,
+          "y2": 280,
+          "w": 70,
+          "h": 42
+        }
+      },
+      {
+        "class": "garbage",
+        "confidence": 0.44,
+        "bbox": {
+          "x1": 412,
+          "y1": 314,
+          "x2": 704,
+          "y2": 421,
+          "w": 292,
+          "h": 107
+        }
+      },
+      {
+        "class": "garbage",
+        "confidence": 0.37,
+        "bbox": {
+          "x1": 538,
+          "y1": 87,
+          "x2": 747,
+          "y2": 156,
+          "w": 209,
+          "h": 69
+        }
+      },
+      {
+        "class": "garbage",
+        "confidence": 0.34,
+        "bbox": {
+          "x1": 707,
+          "y1": 297,
+          "x2": 784,
+          "y2": 343,
+          "w": 77,
+          "h": 46
+        }
+      }
+    ],
+    "processed_image_path": "d:\\VSCode\\Machine_learning\\GarbageDetector\\ProcessedImages\\garbage_20250831033204.jpg",
+    "processed_image_url": "http://localhost:5000/api/image/1"
+  },
+  {
+    "id": 2,
+    "timestamp": "2025-08-31T04:29:02.765659",
+    "location": {
+      "latitude": 12.8217735,
+      "longitude": 80.0434356,
+      "address": "Grand Southern Trunk Road, Maraimalai Nagar Industrial Area, Kattangulathur, Chengalpattu, Tamil Nadu, 603203, India"
+    },
+    "garbage_count": 8,
+    "detections": [
+      {
+        "class": "garbage",
+        "confidence": 0.74,
+        "bbox": {
+          "x1": 797,
+          "y1": 313,
+          "x2": 1052,
+          "y2": 427,
+          "w": 255,
+          "h": 114
+        }
+      },
+      {
+        "class": "garbage",
+        "confidence": 0.61,
+        "bbox": {
+          "x1": 434,
+          "y1": 243,
+          "x2": 601,
+          "y2": 311,
+          "w": 167,
+          "h": 68
+        }
+      },
+      {
+        "class": "garbage",
+        "confidence": 0.51,
+        "bbox": {
+          "x1": 419,
+          "y1": 323,
+          "x2": 546,
+          "y2": 409,
+          "w": 127,
+          "h": 86
+        }
+      },
+      {
+        "class": "garbage",
+        "confidence": 0.5,
+        "bbox": {
+          "x1": 489,
+          "y1": 83,
+          "x2": 744,
+          "y2": 147,
+          "w": 255,
+          "h": 64
+        }
+      },
+      {
+        "class": "garbage",
+        "confidence": 0.46,
+        "bbox": {
+          "x1": 725,
+          "y1": 238,
+          "x2": 795,
+          "y2": 280,
+          "w": 70,
+          "h": 42
+        }
+      },
+      {
+        "class": "garbage",
+        "confidence": 0.44,
+        "bbox": {
+          "x1": 412,
+          "y1": 314,
+          "x2": 704,
+          "y2": 421,
+          "w": 292,
+          "h": 107
+        }
+      },
+      {
+        "class": "garbage",
+        "confidence": 0.37,
+        "bbox": {
+          "x1": 538,
+          "y1": 87,
+          "x2": 747,
+          "y2": 156,
+          "w": 209,
+          "h": 69
+        }
+      },
+      {
+        "class": "garbage",
+        "confidence": 0.34,
+        "bbox": {
+          "x1": 707,
+          "y1": 297,
+          "x2": 784,
+          "y2": 343,
+          "w": 77,
+          "h": 46
+        }
+      }
+    ],
+    "processed_image_path": "d:\\VSCode\\Machine_learning\\GarbageDetector\\ProcessedImages\\garbage_20250831042902.jpg",
+    "processed_image_url": "http://localhost:5000/api/image/2"
+  }
+  ,{
+    "id": 3,
+    "timestamp": "2025-09-04T11:20:30.987654",
+    "location": {
+      "latitude": 17.385044,
+      "longitude": 78.486671,
+      "address": "Hitech City, Hyderabad, Telangana, India"
+    },
+    "garbage_count": 6,
+    "detections": [
+      {
+        "class": "garbage",
+        "confidence": 0.80,
+        "bbox": { "x1": 100, "y1": 150, "x2": 250, "y2": 270, "w": 150, "h": 120 }
+      },
+      {
+        "class": "garbage",
+        "confidence": 0.60,
+        "bbox": { "x1": 300, "y1": 200, "x2": 420, "y2": 300, "w": 120, "h": 100 }
+      },
+      {
+        "class": "garbage",
+        "confidence": 0.50,
+        "bbox": { "x1": 450, "y1": 250, "x2": 540, "y2": 320, "w": 90, "h": 70 }
+      }
+    ],
+    "processed_image_path": "d:\\VSCode\\Machine_learning\\GarbageDetector\\ProcessedImages\\garbage_20250904112030.jpg",
+    "processed_image_url": "http://localhost:5000/api/image/3"
+  }
+]
