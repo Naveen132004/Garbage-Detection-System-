@@ -83,13 +83,6 @@ SRM Institute of Science and Technology
 GitHub:
 https://github.com/Naveen132004
 
-Ishan Bag
-
-B.Tech – Computer Science and Business Systems
-SRM Institute of Science and Technology
-
-GitHub: https://github.com/ISHAN106
-
 🌱 Future Improvements
 
 Real-time garbage detection using camera
