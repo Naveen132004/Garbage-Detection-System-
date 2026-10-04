@@ -10,7 +10,6 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 import cv2
-import cvzone
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 
@@ -18,11 +17,6 @@ from PIL import Image, ExifTags
 import folium
 from branca.element import Template, MacroElement
 import requests
-
-try:
-    from ultralytics import YOLO
-except ImportError:
-    YOLO = None
 
 try:
     from geopy.geocoders import Nominatim
@@ -54,7 +48,11 @@ for folder in (app.config['UPLOAD_FOLDER'], app.config['RESULTS_FOLDER'],
 
 ALLOWED_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.bmp', '.webp')
 CONFIDENCE_THRESHOLD = float(os.getenv("CONFIDENCE_THRESHOLD", "0.3"))
-MODEL_PATH = os.getenv("MODEL_PATH", os.path.join(BASE_DIR, "Weights", "best.pt"))
+# Weights/best.onnx (light, ONNX Runtime) is preferred over Weights/best.pt (needs PyTorch)
+MODEL_PATH = os.getenv("MODEL_PATH") or next(
+    (p for p in (os.path.join(BASE_DIR, "Weights", "best.onnx"), os.path.join(BASE_DIR, "Weights", "best.pt"))
+     if os.path.exists(p)),
+    os.path.join(BASE_DIR, "Weights", "best.pt"))
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 APP_TIMEZONE = ZoneInfo(os.getenv("APP_TIMEZONE", "Asia/Kolkata"))
@@ -73,6 +71,7 @@ display_names = {
     'garbage_bag': 'Garbage bag',
     'sampah-detection': 'Litter',
     'trash': 'Trash',
+    # Classes of the public waste model (kendrickfff/waste-classification-yolov8-ken)
     'battery': 'Battery',
     'biological': 'Food / organic waste',
     'brown-glass': 'Brown glass',
@@ -136,20 +135,53 @@ def calculate_pollution_score(detections):
 # YOLO model
 # ----------------------------
 yolo_model = None
-if YOLO is None:
-    print("Warning: ultralytics is not installed; detection is disabled.")
-elif not os.path.exists(MODEL_PATH):
+
+
+def load_model(path):
+    """Load an ONNX model with ONNX Runtime, or a .pt model with Ultralytics. Returns (detect_fn, names)."""
+    if path.lower().endswith('.onnx'):
+        from onnx_detector import OnnxYoloDetector
+        detector = OnnxYoloDetector(path)
+        return (lambda img: detector.detect(img, conf_threshold=CONFIDENCE_THRESHOLD)), detector.names
+
+    from ultralytics import YOLO
+    model = YOLO(path)
+
+    def detect(img):
+        found = []
+        for r in model(img, conf=CONFIDENCE_THRESHOLD, verbose=False):
+            for box in r.boxes:
+                x1, y1, x2, y2 = box.xyxy[0].tolist()
+                found.append((x1, y1, x2, y2, float(box.conf[0]), int(box.cls[0])))
+        return found
+
+    return detect, model.names
+
+
+if not os.path.exists(MODEL_PATH):
     print(f"Warning: model weights not found at {MODEL_PATH}; detection is disabled.")
 else:
     try:
-        yolo_model = YOLO(MODEL_PATH)
+        yolo_model, names = load_model(MODEL_PATH)
         # Use the class names stored in the weights, so any YOLO model works
-        names = getattr(yolo_model, 'names', None)
         if names:
             class_labels = [names[i] for i in sorted(names)] if isinstance(names, dict) else list(names)
-        print(f"YOLO model loaded successfully ({len(class_labels)} classes)")
+        print(f"Model loaded from {os.path.basename(MODEL_PATH)} ({len(class_labels)} classes)")
     except Exception as e:
-        print(f"Warning: Could not load YOLO model: {e}")
+        print(f"Warning: Could not load the model: {e}")
+
+
+def draw_box(img, x1, y1, w, h, color, text):
+    """Box with highlighted corners and a filled label above it."""
+    cv2.rectangle(img, (x1, y1), (x1 + w, y1 + h), color, 1)
+    corner = max(8, min(w, h) // 5)
+    for (cx, cy, dx, dy) in ((x1, y1, 1, 1), (x1 + w, y1, -1, 1), (x1, y1 + h, 1, -1), (x1 + w, y1 + h, -1, -1)):
+        cv2.line(img, (cx, cy), (cx + dx * corner, cy), color, 3)
+        cv2.line(img, (cx, cy), (cx, cy + dy * corner), color, 3)
+    (tw, th), base = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)
+    tx, ty = max(0, x1), max(th + 8, y1 - 6)
+    cv2.rectangle(img, (tx, ty - th - 6), (tx + tw + 8, ty + base - 2), (40, 40, 40), -1)
+    cv2.putText(img, text, (tx + 4, ty - 3), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1, cv2.LINE_AA)
 
 
 # ----------------------------
@@ -376,34 +408,23 @@ def process_image_with_location(image_path, output_path, lat=None, lng=None):
         else:
             lat = lng = None
 
-    results = yolo_model(img, verbose=False)
-
     detections = []
-    for r in results:
-        boxes = getattr(r, 'boxes', None)
-        if boxes is None:
-            continue
-        for box in boxes:
-            x1, y1, x2, y2 = (int(v) for v in box.xyxy[0].tolist())
-            w, h = x2 - x1, y2 - y1
-            conf = math.ceil(float(box.conf[0]) * 100) / 100
-            cls = int(box.cls[0])
+    for bx1, by1, bx2, by2, raw_conf, cls in yolo_model(img):
+        x1, y1, x2, y2 = int(bx1), int(by1), int(bx2), int(by2)
+        w, h = x2 - x1, y2 - y1
+        conf = math.ceil(raw_conf * 100) / 100
 
-            if conf > CONFIDENCE_THRESHOLD and 0 <= cls < len(class_labels):
-                label = class_labels[cls]
-                detections.append({
-                    'class': label,
-                    'label': display_names.get(label, label.replace('_', ' ').replace('-', ' ').capitalize()),
-                    'confidence': conf,
-                    'bbox': [x1, y1, w, h]
-                })
-                color = (0, 200, 0) if conf > 0.7 else (0, 200, 255) if conf > 0.5 else (0, 0, 255)
-                cvzone.cornerRect(img, (x1, y1, w, h), t=2, colorR=color)
-                cvzone.putTextRect(
-                    img, f"{display_names.get(label, label)} {conf:.2f}",
-                    (max(0, x1), max(20, y1 - 10)),
-                    scale=0.8, thickness=1, colorR=(40, 40, 40), colorT=(255, 255, 255)
-                )
+        if conf > CONFIDENCE_THRESHOLD and 0 <= cls < len(class_labels):
+            label = class_labels[cls]
+            friendly = display_names.get(label, label.replace('_', ' ').replace('-', ' ').capitalize())
+            detections.append({
+                'class': label,
+                'label': friendly,
+                'confidence': conf,
+                'bbox': [x1, y1, w, h]
+            })
+            color = (0, 200, 0) if conf > 0.7 else (0, 200, 255) if conf > 0.5 else (0, 0, 255)
+            draw_box(img, x1, y1, w, h, color, f"{friendly} {conf:.2f}")
 
     pollution_score = calculate_pollution_score(detections)
     level = score_level(pollution_score)

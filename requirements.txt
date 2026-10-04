@@ -9,3 +9,4 @@ pymongo>=4.6
 requests>=2.31
 matplotlib>=3.8
 gunicorn>=22.0
+onnxruntime>=1.17

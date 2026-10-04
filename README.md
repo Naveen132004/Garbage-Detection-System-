@@ -64,15 +64,25 @@ All secrets come from environment variables; see `.env.example`.
 
 The app is then live at `https://<your-username>-<space-name>.hf.space`.
 
-## Deploy to Render
+## Deploy to Render (free plan)
 
-1. In the Render dashboard choose **New → Blueprint**, connect GitHub and pick this repo. Render reads `render.yaml` and builds the `Dockerfile`.
+The free plan has 512 MB of RAM, which is too little for PyTorch, so Render runs a light install (`requirements-render.txt`) that detects with ONNX Runtime instead. It needs the model in ONNX format at `Weights/best.onnx`, committed to the repo:
+
+```bash
+pip install ultralytics onnx
+yolo export model=Weights/best.pt format=onnx imgsz=640
+git add -f Weights/best.onnx
+```
+
+1. In the Render dashboard choose **New → Blueprint**, connect GitHub and pick this repo. Render reads `render.yaml`.
 2. When asked, fill in `MONGO_URI` (MongoDB Atlas connection string, with a NEW password); the two API keys are optional. Without `MONGO_URI`, results are lost on every restart or redeploy.
-3. Click **Apply**. The first build takes about 10 minutes; the app is then live at `https://garbage-detection-xxxx.onrender.com`.
+3. Click **Apply**. The app is then live at `https://garbage-detection-xxxx.onrender.com`.
 
-The free plan has 512 MB of RAM and sleeps after 15 minutes without visitors (the first request after that takes about a minute). If the app runs out of memory, switch the service to a plan with 2 GB of RAM.
+Free services sleep after 15 minutes without visitors; the first request after that takes about a minute.
 
-Other hosts: the `Procfile` starts the same production server (`gunicorn app1:app`). The host needs at least 1–2 GB of RAM for PyTorch.
+Other hosts: the `Procfile` starts the same production server (`gunicorn app1:app`). With `Weights/best.onnx` and `requirements-render.txt` the app runs in about 350 MB of RAM; with `best.pt` and PyTorch it needs 1–2 GB.
+
+Default model: [kendrickfff/waste-classification-yolov8-ken](https://huggingface.co/kendrickfff/waste-classification-yolov8-ken) (CC-BY-4.0), the YOLO11l weights from that page converted to ONNX.
 
 ## Project structure
 
@@ -87,6 +97,8 @@ graph.py                Charts for every image in Media/
 Weights/best.pt         YOLO weights (not in git; downloaded at Docker build)
 Dockerfile              Production image (Hugging Face Spaces)
 Procfile                Production start command for other hosts
+render.yaml             Render Blueprint (free plan, ONNX Runtime)
+onnx_detector.py        Light YOLO detector on ONNX Runtime (no PyTorch)
 ```
 
 ## API
