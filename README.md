@@ -64,6 +64,14 @@ All secrets come from environment variables; see `.env.example`.
 
 The app is then live at `https://<your-username>-<space-name>.hf.space`.
 
+## Deploy to Render
+
+1. In the Render dashboard choose **New → Blueprint**, connect GitHub and pick this repo. Render reads `render.yaml` and builds the `Dockerfile`.
+2. When asked, fill in `MONGO_URI` (MongoDB Atlas connection string, with a NEW password); the two API keys are optional. Without `MONGO_URI`, results are lost on every restart or redeploy.
+3. Click **Apply**. The first build takes about 10 minutes; the app is then live at `https://garbage-detection-xxxx.onrender.com`.
+
+The free plan has 512 MB of RAM and sleeps after 15 minutes without visitors (the first request after that takes about a minute). If the app runs out of memory, switch the service to a plan with 2 GB of RAM.
+
 Other hosts: the `Procfile` starts the same production server (`gunicorn app1:app`). The host needs at least 1–2 GB of RAM for PyTorch.
 
 ## Project structure

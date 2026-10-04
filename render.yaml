@@ -1,0 +1,18 @@
+# Render Blueprint: builds the Dockerfile and runs the app with gunicorn.
+# Render sets PORT itself; the Dockerfile's start command uses it.
+services:
+  - type: web
+    name: garbage-detection
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: MONGO_DB
+        value: garbage_db
+      - key: GOOGLE_MAPS_API_KEY
+        sync: false
+      - key: OPENWEATHER_API_KEY
+        sync: false
