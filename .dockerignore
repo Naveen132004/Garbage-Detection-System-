@@ -1,0 +1,10 @@
+.git
+.env
+__pycache__/
+uploads/
+results/
+maps/
+data/
+Media/
+_backup_original/
+server*.log
