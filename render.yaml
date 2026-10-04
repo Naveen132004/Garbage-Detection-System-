@@ -1,13 +1,18 @@
-# Render Blueprint: builds the Dockerfile and runs the app with gunicorn.
-# Render sets PORT itself; the Dockerfile's start command uses it.
+# Render Blueprint for the free plan: a light Python install (ONNX Runtime, no PyTorch)
+# that fits in 512 MB. Needs Weights/best.onnx in the repo.
 services:
   - type: web
     name: garbage-detection
-    runtime: docker
+    runtime: python
     plan: free
-    dockerfilePath: ./Dockerfile
+    buildCommand: pip install -r requirements-render.txt
+    startCommand: gunicorn app1:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 180
     healthCheckPath: /health
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: MODEL_PATH
+        value: Weights/best.onnx
       - key: MONGO_URI
         sync: false
       - key: MONGO_DB
