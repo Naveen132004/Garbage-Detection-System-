@@ -1,0 +1,10 @@
+flask>=3.0
+ultralytics>=8.0
+opencv-python>=4.8
+cvzone>=1.6
+pillow>=10.0
+folium>=0.15
+geopy>=2.4
+pymongo>=4.6
+requests>=2.31
+matplotlib>=3.8
