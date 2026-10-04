@@ -25,6 +25,9 @@ for file in os.listdir(image_folder):
     if file.lower().endswith((".jpg", ".jpeg", ".png")):
         img_path = os.path.join(image_folder, file)
         img = cv2.imread(img_path)
+        if img is None:
+            print(f"Skipping unreadable image: {file}")
+            continue
 
         results = yolo_model(img)
 
@@ -48,12 +51,6 @@ for file in os.listdir(image_folder):
                         "cy": y1 + h // 2,
                         "image": file
                     })
-
-        # OPTIONAL: show detections one by one
-        # cv2.imshow("Detections", img)
-        # cv2.waitKey(300)  # show for 300 ms
-
-cv2.destroyAllWindows()
 
 # ----------------------------
 # PLOTS FOR WHOLE DATASET

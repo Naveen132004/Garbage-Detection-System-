@@ -1,94 +1,78 @@
-♻️ Garbage Detection System
+# ♻️ Garbage Detection System
 
-An AI-based Garbage Detection System that uses Machine Learning and Computer Vision to detect garbage from images.
-The system helps in identifying waste automatically, which can assist in smart waste management and environmental monitoring.
+An AI-based garbage detection system. Upload a photo or use your camera, and a custom YOLO model finds garbage in the picture, gives the spot a pollution score from 0 to 100, and adds it to a shared pollution map.
 
-This project demonstrates the use of image processing and machine learning techniques to classify and detect garbage objects.
+## Features
 
-🚀 Features
+- Detect garbage in uploaded photos or live camera shots (YOLO, OpenCV)
+- Pollution score with Low / Medium / High levels (under 30, 30 to 69, 70 and above)
+- Location from the browser, from the photo's GPS data, or picked on a map
+- Dashboard: reports in the last 24 hours, 7-day trend, top hotspots, latest reports
+- Pollution map with a colour legend (OpenStreetMap, plus Google layers when a key is set)
+- Works on phones, supports dark mode
+- Stores results in MongoDB Atlas, or in a local JSON file when no database is configured
 
-✅ Detect garbage from images
-✅ Image preprocessing and classification
-✅ AI-based object recognition
-✅ Supports real-time or uploaded image detection
-✅ Environment-friendly smart waste management solution
+## Tech stack
 
-🛠️ Tech Stack
-Programming Language
+Python, Flask, Ultralytics YOLO, OpenCV, cvzone, Folium / Leaflet, MongoDB (pymongo), geopy.
 
-🐍 Python
+## Getting started
 
-Machine Learning / Computer Vision
+```bash
+pip install -r requirements.txt
+cp .env.example .env        # then fill in the values you need
+export $(grep -v '^#' .env | xargs)   # or set the variables another way
+python app1.py
+```
 
-OpenCV
+Open http://127.0.0.1:5000.
 
-TensorFlow / Scikit-learn (update based on your project)
+The model weights must be at `Weights/best.pt` (or set `MODEL_PATH`). Without them the page loads but detection is disabled, and the status pill at the top says "Model not loaded".
 
-NumPy
+### Configuration
 
-Pandas
+All secrets come from environment variables; see `.env.example`.
 
-Tools
+| Variable | Purpose |
+| --- | --- |
+| `MONGO_URI` | MongoDB connection string. Empty means results go to `data/detections.json`. |
+| `GOOGLE_MAPS_API_KEY` | Optional, adds satellite/hybrid/terrain map layers. |
+| `OPENWEATHER_API_KEY` | Optional, saves real weather with each report. |
+| `APP_TIMEZONE` | Timezone for the dashboard's days (default `Asia/Kolkata`). |
+| `HOST`, `PORT`, `FLASK_DEBUG` | Server settings. Keep `FLASK_DEBUG=0` on any shared network. |
 
-Jupyter Notebook / Python Script
+## Project structure
 
-VS Code
+```
+app1.py                 Flask web app (API + page)
+templates/index.html    Web page
+static/css/style.css    Styles
+static/js/app.js        Page logic (upload, camera, location, dashboard, map)
+GarbageDetector.py      Detect garbage in one image:  python GarbageDetector.py path/to/image.jpg
+GarbageDetectorLive.py  Detect garbage in a video or camera:  python GarbageDetectorLive.py 0
+graph.py                Charts for every image in Media/
+Weights/best.pt         YOLO weights (not included)
+```
 
-Garbage-Detection-System/
-Garbage-Detection-System
-│
-├── GarbageDetector
-│   ├── client/
-│   ├── data/
-│   ├── flask_server/
-│   ├── Media/
-│   ├── ProcessedImages/
-│   ├── templates/
-│   ├── Weights/
-│
-│   ├── app1.py
-│   ├── GarbageDetector.py
-│   ├── GarbageDetectorLive.py
-│   ├── graph.py
-│   ├── garbage_data.json
-│
-├── static/
-├── uploads/
-├── maps/
-│   └── pollution_map.html
-│
-├── results/
-├── requirements.txt
-└── README.md
+## API
 
+| Route | Method | Description |
+| --- | --- | --- |
+| `/upload_with_location` | POST | Form upload: `file`, optional `latitude`, `longitude` |
+| `/capture_image` | POST | JSON: `image` (data URL), optional `latitude`, `longitude` |
+| `/get_pollution_data` | GET | Dashboard statistics |
+| `/generate_pollution_map` | GET | Pollution map page |
+| `/result/<file>` | GET | Processed image |
+| `/health` | GET | Model and database status |
 
-📚 Learning Outcomes
+Errors return a JSON `{"error": "..."}` with a matching HTTP status code.
 
-Through this project we learned:
+## Contributors
 
-Machine Learning model training
+Naveen Kumar, B.Tech Computer Science and Business Systems, SRM Institute of Science and Technology. GitHub: https://github.com/Naveen132004
 
-Image preprocessing techniques
+## Future improvements
 
-Computer Vision using OpenCV
-
-Applying AI to real-world environmental problems
-
-👨‍💻 Contributors
-Naveen Kumar 
-
-B.Tech – Computer Science and Business Systems
-SRM Institute of Science and Technology
-
-GitHub:
-https://github.com/Naveen132004
-
-🌱 Future Improvements
-
-Real-time garbage detection using camera
-
-Integration with smart city waste systems
-
-Mobile application for detection
-
-Deep learning model improvement
+- Integration with smart city waste systems
+- Mobile app
+- Better deep learning model

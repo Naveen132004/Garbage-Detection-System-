@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1f7a4d">
+  <title>Garbage Detection System</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♻️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="#detect" aria-label="Home">
+        <span class="brand-mark" aria-hidden="true">♻</span>
+        <span>Garbage Detection</span>
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="#detect" class="nav-link">Detect</a>
+        <a href="#dashboard" class="nav-link">Dashboard</a>
+        <a href="#map" class="nav-link">Map</a>
+      </nav>
+      <div class="topbar-actions">
+        <span id="systemStatus" class="status-pill" role="status">Checking…</span>
+        <button id="themeToggle" class="icon-btn" type="button" aria-label="Switch dark or light theme">◐</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="container">
+        <h1>Spot garbage. Map it. Clean it up.</h1>
+        <p>Upload a photo or use your camera. The app finds waste in the picture, scores how polluted the spot is, and adds it to the community map.</p>
+      </div>
+    </section>
+
+    <!-- Detect -->
+    <section id="detect" class="container section" aria-labelledby="detectTitle">
+      <ol class="steps" aria-label="Progress">
+        <li class="step is-active" data-step="1"><span>1</span> Add photo</li>
+        <li class="step" data-step="2"><span>2</span> Location</li>
+        <li class="step" data-step="3"><span>3</span> Result</li>
+      </ol>
+
+      <div class="grid-2">
+        <div class="card">
+          <h2 id="detectTitle" class="card-title">Add a photo</h2>
+
+          <div class="tabs" role="tablist" aria-label="Photo source">
+            <button class="tab is-active" role="tab" id="tabUpload" aria-controls="panelUpload" aria-selected="true" type="button">Upload</button>
+            <button class="tab" role="tab" id="tabCamera" aria-controls="panelCamera" aria-selected="false" type="button">Camera</button>
+          </div>
+
+          <div id="panelUpload" role="tabpanel" aria-labelledby="tabUpload">
+            <label id="dropZone" class="dropzone" for="fileInput">
+              <input id="fileInput" type="file" accept="image/png,image/jpeg,image/bmp,image/webp" hidden>
+              <div id="dropEmpty" class="dropzone-empty">
+                <span class="dropzone-icon" aria-hidden="true">⬆</span>
+                <strong>Drop an image here or click to browse</strong>
+                <small>JPG, PNG, BMP or WEBP, up to {{ max_upload_mb }} MB</small>
+              </div>
+              <img id="previewImg" class="preview" alt="Selected photo preview" hidden>
+            </label>
+            <div id="fileMeta" class="file-meta" hidden>
+              <span id="fileName"></span>
+              <button id="clearFile" class="link-btn" type="button">Remove</button>
+            </div>
+          </div>
+
+          <div id="panelCamera" role="tabpanel" aria-labelledby="tabCamera" hidden>
+            <div class="camera">
+              <video id="video" playsinline muted aria-label="Camera preview"></video>
+              <img id="capturePreview" class="preview" alt="Captured photo" hidden>
+              <div id="cameraPlaceholder" class="camera-placeholder">
+                <p>Your camera stays off until you start it.</p>
+                <button id="startCamera" class="btn btn-secondary" type="button">Start camera</button>
+              </div>
+            </div>
+            <div class="camera-actions">
+              <button id="snapBtn" class="btn btn-secondary" type="button" disabled>Take photo</button>
+              <button id="retakeBtn" class="btn btn-ghost" type="button" hidden>Retake</button>
+              <button id="switchCamera" class="btn btn-ghost" type="button" hidden>Switch camera</button>
+            </div>
+            <canvas id="canvas" hidden></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">Where was it taken?</h2>
+          <p class="muted">Location puts the result on the map. If you skip it, we'll try the photo's GPS data.</p>
+
+          <button id="locateBtn" class="btn btn-secondary btn-block" type="button">📍 Use my current location</button>
+          <p id="locationStatus" class="location-status" role="status" aria-live="polite">No location yet.</p>
+
+          <details id="manualLocation" class="manual">
+            <summary>Enter or pick the location manually</summary>
+            <div class="field-row">
+              <label class="field">
+                <span>Latitude</span>
+                <input id="latInput" type="number" step="any" min="-90" max="90" inputmode="decimal" placeholder="12.8326">
+              </label>
+              <label class="field">
+                <span>Longitude</span>
+                <input id="lngInput" type="number" step="any" min="-180" max="180" inputmode="decimal" placeholder="80.0423">
+              </label>
+            </div>
+            <p class="muted small">Or tap the map to drop a pin.</p>
+            <div id="pickMap" class="pick-map" aria-label="Map for picking a location"></div>
+          </details>
+
+          <button id="analyzeBtn" class="btn btn-primary btn-block btn-lg" type="button" disabled>
+            <span class="btn-label">Analyse photo</span>
+            <span class="spinner" aria-hidden="true"></span>
+          </button>
+          <p id="analyzeHint" class="muted small center">Add a photo to continue.</p>
+        </div>
+      </div>
+
+      <!-- Result -->
+      <div id="resultCard" class="card result" hidden tabindex="-1" aria-live="polite">
+        <div class="result-head">
+          <h2 class="card-title">Result</h2>
+          <div class="result-actions">
+            <a id="downloadBtn" class="btn btn-ghost" download>Download image</a>
+            <button id="newScanBtn" class="btn btn-secondary" type="button">New scan</button>
+          </div>
+        </div>
+        <div class="result-body">
+          <figure class="result-figure">
+            <a id="resultLink" target="_blank" rel="noopener">
+              <img id="resultImg" alt="Photo with detected garbage outlined">
+            </a>
+            <figcaption class="muted small">Click the image to open it full size.</figcaption>
+          </figure>
+          <div class="result-info">
+            <div class="gauge-wrap">
+              <svg class="gauge" viewBox="0 0 120 70" role="img" aria-labelledby="gaugeLabel">
+                <path class="gauge-track" d="M10 60 A50 50 0 0 1 110 60" />
+                <path id="gaugeFill" class="gauge-fill" d="M10 60 A50 50 0 0 1 110 60" />
+              </svg>
+              <div class="gauge-text">
+                <strong id="scoreValue">0</strong>
+                <span id="scoreLevel" class="badge">Low</span>
+              </div>
+              <p id="gaugeLabel" class="muted small center">Pollution score out of 100</p>
+            </div>
+            <dl class="facts">
+              <div><dt>Items found</dt><dd id="itemCount">0</dd></div>
+              <div><dt>Location</dt><dd id="resultLocation">Not available</dd></div>
+            </dl>
+            <ul id="breakdown" class="breakdown" aria-label="Items by type"></ul>
+            <p id="saveNote" class="note"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dashboard" class="container section" aria-labelledby="dashTitle">
+      <div class="section-head">
+        <h2 id="dashTitle">Dashboard</h2>
+        <button id="refreshStats" class="btn btn-ghost" type="button">Refresh</button>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="stat-label">Reports (24h)</span><strong id="statReports" class="stat-value">–</strong></div>
+        <div class="stat"><span class="stat-label">Items found (24h)</span><strong id="statItems" class="stat-value">–</strong></div>
+        <div class="stat"><span class="stat-label">Average score</span><strong id="statAvg" class="stat-value">–</strong></div>
+        <div class="stat"><span class="stat-label">Highest score</span><strong id="statMax" class="stat-value">–</strong></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3 class="card-title">Last 7 days</h3>
+          <div id="trendChart" class="chart" role="img" aria-label="Average pollution score per day"></div>
+        </div>
+        <div class="card">
+          <h3 class="card-title">Top hotspots</h3>
+          <ol id="hotspots" class="list"></ol>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="card-title">Latest reports</h3>
+        <ul id="recentList" class="list"></ul>
+      </div>
+    </section>
+
+    <!-- Map -->
+    <section id="map" class="container section" aria-labelledby="mapTitle">
+      <div class="section-head">
+        <h2 id="mapTitle">Pollution map</h2>
+        <div>
+          <a class="btn btn-ghost" href="/generate_pollution_map" target="_blank" rel="noopener">Open full screen</a>
+          <button id="reloadMap" class="btn btn-ghost" type="button">Reload</button>
+        </div>
+      </div>
+      <div class="card map-card">
+        <iframe id="mapFrame" title="Pollution map" loading="lazy"></iframe>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">Garbage Detection System · Built with YOLO, Flask and Leaflet</div>
+  </footer>
+
+  <div id="toasts" class="toasts" aria-live="assertive"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
