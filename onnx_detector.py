@@ -4,11 +4,17 @@ Create the .onnx file once from a trained model with:
     yolo export model=Weights/best.pt format=onnx imgsz=640
 """
 import ast
+import ctypes
 import threading
 
 import cv2
 import numpy as np
 import onnxruntime as ort
+
+try:
+    _libc = ctypes.CDLL("libc.so.6")  # Linux: lets us hand freed memory back to the OS
+except OSError:
+    _libc = None
 
 
 class OnnxYoloDetector:
@@ -54,6 +60,8 @@ class OnnxYoloDetector:
         blob = cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB).transpose(2, 0, 1)[None].astype(np.float32) / 255.0
         with self.lock:
             output = self.session.run(None, {self.input_name: blob})[0][0]  # (4 + classes, anchors)
+            if _libc is not None:
+                _libc.malloc_trim(0)
 
         predictions = output.T
         scores = predictions[:, 4:]

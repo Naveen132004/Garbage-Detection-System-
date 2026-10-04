@@ -13,6 +13,9 @@ services:
         value: 3.11.9
       - key: MODEL_PATH
         value: Weights/best.onnx
+      # One shared malloc pool: stops each request thread from keeping its own copy of freed memory
+      - key: MALLOC_ARENA_MAX
+        value: "2"
       - key: MONGO_URI
         sync: false
       - key: MONGO_DB
